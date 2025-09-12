@@ -8,6 +8,7 @@ import cors from 'cors';
 import {notFound, errorHandler} from './middlewares';
 import api from './api';
 import {MessageResponse} from './types/MessageTypes';
+import path from 'path';
 
 const app = express();
 
@@ -21,6 +22,8 @@ app.get<{}, MessageResponse>('/', (_req, res) => {
     message: 'API location: api/v1',
   });
 });
+
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use('/api/v1', api);
 

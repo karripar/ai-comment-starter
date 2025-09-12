@@ -1,6 +1,6 @@
 import express from 'express';
 
-import commentRoute from './routes/commentRoute';
+import route from './routes/route';
 
 import {MessageResponse} from '../types/MessageTypes';
 
@@ -8,10 +8,10 @@ const router = express.Router();
 
 router.get<{}, MessageResponse>('/', (_req, res) => {
   res.json({
-    message: 'routes: comments',
+    message: 'routes: /ai',
   });
 });
 
-router.use('/comments', commentRoute);
+router.use('/ai', route);
 
 export default router;
