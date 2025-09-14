@@ -7,7 +7,7 @@ import path from 'path';
 
 type ImageResponse = {
   created?: number;
-  data: { url?: string; b64_json?: string }[];
+  data: {url?: string; b64_json?: string}[];
 };
 
 const imageGenerate = async (
@@ -28,7 +28,7 @@ const imageGenerate = async (
 
     const request = {
       model: 'dall-e-2',
-      prompt: `Create a thumbnail image for the following video topic: "${req.body.text}" in a vibrant and engaging style. Make sure the image is eye-catching and relevant to the topic.`,
+      prompt: `Create a thumbnail image for the following video topic: "${req.body.text}" in a vibrant and engaging style. Make sure the image is eye-catching and relevant to the topic. Do not include any text in the image unless asked to do so.`,
       size: '1024x1024',
       n: 1,
     };
@@ -52,37 +52,40 @@ const imageGenerate = async (
     }
 
     const imageUrl = response.data[0].url;
-    const imageName = `${Date.now()}.png`;
+    const now = new Date();
+    const imageName = `${now
+      .toLocaleString('fi-FI')
+      .replace(/[.: ]/g, '_')}.png`;
+
     const uploadPath = path.join(__dirname, '../../../uploads', imageName);
 
-    // Make sure uploads folder exists
     if (!fs.existsSync(path.dirname(uploadPath))) {
       fs.mkdirSync(path.dirname(uploadPath), {recursive: true});
     }
 
     // Download image from URL
     const file = fs.createWriteStream(uploadPath);
-    https.get(imageUrl, (downloadRes) => {
-      downloadRes.pipe(file);
-      file.on('finish', () => {
-        file.close();
-        console.log(`Image saved to ${uploadPath}`);
+    https
+      .get(imageUrl, (downloadRes) => {
+        downloadRes.pipe(file);
+        file.on('finish', () => {
+          file.close();
+          console.log(`Image saved to ${uploadPath}`);
 
-        // Return both the signed url and local file path
-        res.json({
-          url: imageUrl,
-          file: `/uploads/${imageName}`, // serve via express.static
+          res.json({
+            url: imageUrl,
+            file: `/uploads/${imageName}`, // served through express.static
+          });
         });
+      })
+      .on('error', (err) => {
+        fs.unlinkSync(uploadPath);
+        console.error('Error downloading image:', err.message);
+        next(new CustomError('Error saving image', 500));
       });
-    }).on('error', (err) => {
-      fs.unlinkSync(uploadPath);
-      console.error('Error downloading image:', err.message);
-      next(new CustomError('Error saving image', 500));
-    });
-
   } catch (error) {
     next(error);
   }
 };
 
-export { imageGenerate };
+export {imageGenerate};
